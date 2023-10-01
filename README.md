@@ -16,7 +16,7 @@ Python script which reducing amount of unique tiles in image (useful for retro d
 1. Generating tileset from image
 2. Generating tilemap from image (2D array)
 3. Generating reduced tileset according to this formula: tile_size = cell_size*quality
-4. Comparing every tile with every tile in reduced tileset, if tiles are equal, then merghing tiles. Merged tile putting from reduced tileset to original tileset
+4. Comparing every tile with every tile in reduced tileset, if tiles are equal, then merging tiles. Merged tile putting from reduced tileset to original tileset
 5. Recreating image back, from tileset and tilemap.
 6. Done
 
