@@ -17,6 +17,7 @@ class SimilarityAlghorithm(Enum):
     TEST_ALG2 = 4,
     EQUAL_PIXELS_ON_REDUCED_RESOLUTION_V2 = 5, #a lot better
     EQUAL_PIXELS_ON_REDUCED_RESOLUTION_V2_TEST = 6,
+    EQUAL_PIXELS_ON_REDUCED_RESOLUTION_V2_TTT=7,
 
 class uniqueTileReducer():
   src_img = None
@@ -24,6 +25,10 @@ class uniqueTileReducer():
   src_img_amount_of_colors = 0
   tileset = []
   resizedTileset = []
+  resizedTileset2 = []
+  resizedTileset3 = []
+  resizedTileset4 = []
+
   src_img_path = ""
   cell_size = 8
 
@@ -177,12 +182,32 @@ class uniqueTileReducer():
         if new_res[1] == 0:
            new_res = 1
         self.resizedTileset = []
+        self.resizedTileset2 = []
+        self.resizedTileset3 = []
+        self.resizedTileset4 = []
+
         for tileInd in range(len(self.tileset)):
            self.resizedTileset.append(self.tileset[tileInd].resize([new_res[0], new_res[1]], Image.NEAREST))
+        for tileInd in range(len(self.tileset)):
+           self.resizedTileset2.append(self.tileset[tileInd].resize([new_res[0], new_res[1]], Image.NEAREST).transpose(Image.FLIP_LEFT_RIGHT))
+        for tileInd in range(len(self.tileset)):
+           self.resizedTileset3.append(self.tileset[tileInd].resize([new_res[0], new_res[1]], Image.NEAREST).transpose(Image.FLIP_TOP_BOTTOM))
+        for tileInd in range(len(self.tileset)):
+           self.resizedTileset4.append(self.tileset[tileInd].resize([new_res[0], new_res[1]], Image.NEAREST).transpose(Image.FLIP_TOP_BOTTOM).transpose(Image.FLIP_LEFT_RIGHT))
           #  self.tileset[tileInd] = self.tileset[tileInd].resize([new_res[0], new_res[1]], Image.NEAREST)
         for tileInd in range(len(self.tileset)):
             for testTileInd in range(tileInd+1, len(self.tileset)):
                 equal_perc = self.getImageEqualPercent(self.resizedTileset[tileInd], self.resizedTileset[testTileInd])
+                test_perc = self.getImageEqualPercent(self.resizedTileset2[tileInd], self.resizedTileset2[testTileInd])
+                if test_perc > equal_perc:
+                  equal_perc = test_perc
+                test_perc = self.getImageEqualPercent(self.resizedTileset3[tileInd], self.resizedTileset3[testTileInd])
+                if test_perc > equal_perc:
+                  equal_perc = test_perc
+                test_perc = self.getImageEqualPercent(self.resizedTileset4[tileInd], self.resizedTileset4[testTileInd])
+                if test_perc > equal_perc:
+                  equal_perc = test_perc
+
                 is_same_dom_color, who_have_more_colors, is_colors_same_on_2_images = self.isImagesHaveColors(self.tileset[tileInd], self.tileset[testTileInd])
                 # if not is_colors_same_on_2_images:
                 #    continue
@@ -192,7 +217,7 @@ class uniqueTileReducer():
                         self.tileset[tileInd] = self.resizedTileset[testTileInd].resize([self.cell_size, self.cell_size], Image.NEAREST)
                     else:
                         self.tileset[testTileInd] = self.resizedTileset[testTileInd].resize([self.cell_size, self.cell_size], Image.NEAREST)
-    elif(self.similarity_method == SimilarityAlghorithm.EQUAL_PIXELS_ON_REDUCED_RESOLUTION_V2_TEST):
+    elif(self.similarity_method == SimilarityAlghorithm.EQUAL_PIXELS_ON_REDUCED_RESOLUTION_V2_TTT):
        #reduce every tile size
         new_res = [int(self.cell_size*threshold), int(self.cell_size*threshold)]
         if new_res[0] == 0:
@@ -208,32 +233,118 @@ class uniqueTileReducer():
             testTileInd = tileInd+1
             while testTileInd < len(self.tileset):
                 equal_perc = self.getImageEqualPercent(self.resizedTileset[tileInd], self.resizedTileset[testTileInd])
+                
                 is_same_dom_color, who_have_more_colors, is_colors_same_on_2_images = self.isImagesHaveColors(self.tileset[tileInd], self.tileset[testTileInd])
                 # if not is_colors_same_on_2_images:
                 #    continue
-               #  print("[]", testTileInd, len(self.tileset))
-                if((equal_perc >= 0.60) and is_same_dom_color): #0.75
-                    
-                    if((self.tile_population[tileInd] < self.tile_population[testTileInd]) ):
-                        # and who_have_more_colors and is_colors_same_on_2_images
-                        # print(testTileInd)
-                        self.replaceTileIndOnTileMap(testTileInd, tileInd)
-                        self.tileset = self.removeIndFromArr(self.tileset, testTileInd)
-                        self.resizedTileset = self.removeIndFromArr(self.resizedTileset, testTileInd)
-
-                        
-                        
-                        # self.removeTileIndOnTileMap(testTileInd)
-                        
+                if((equal_perc >= 0.60)): #0.75
+                    # print(equal_perc)
+                    if((self.tile_population[tileInd] < self.tile_population[testTileInd]) and who_have_more_colors and is_colors_same_on_2_images):
                         self.tileset[tileInd] = self.resizedTileset[testTileInd].resize([self.cell_size, self.cell_size], Image.NEAREST)
                     else:
-                        # self.tileset.remove(tileInd)
-                        # self.replaceTileIndOnTileMap(tileInd, testTileInd)
-                        pass
-                        # self.tileset[testTileInd] = self.resizedTileset[testTileInd].resize([self.cell_size, self.cell_size], Image.NEAREST)
+                        self.tileset[testTileInd] = self.resizedTileset[testTileInd].resize([self.cell_size, self.cell_size], Image.NEAREST)
                 testTileInd += 1
-                        
             tileInd += 1
+        
+    elif(self.similarity_method == SimilarityAlghorithm.EQUAL_PIXELS_ON_REDUCED_RESOLUTION_V2_TEST):
+       #reduce every tile size
+        new_res = [int(self.cell_size*threshold), int(self.cell_size*threshold)]
+        if new_res[0] == 0:
+           new_res = 1
+        if new_res[1] == 0:
+           new_res = 1
+        self.resizedTileset = []
+        self.resizedTileset2 = []
+        self.resizedTileset3 = []
+        self.resizedTileset4 = []
+
+        for tileInd in range(len(self.tileset)):
+           self.resizedTileset.append(self.tileset[tileInd].resize([new_res[0], new_res[1]], Image.NEAREST))
+        for tileInd in range(len(self.tileset)):
+           self.resizedTileset2.append(self.tileset[tileInd].resize([new_res[0], new_res[1]], Image.NEAREST).transpose(Image.FLIP_LEFT_RIGHT))
+        for tileInd in range(len(self.tileset)):
+           self.resizedTileset3.append(self.tileset[tileInd].resize([new_res[0], new_res[1]], Image.NEAREST).transpose(Image.FLIP_TOP_BOTTOM))
+        for tileInd in range(len(self.tileset)):
+           self.resizedTileset4.append(self.tileset[tileInd].resize([new_res[0], new_res[1]], Image.NEAREST).transpose(Image.FLIP_TOP_BOTTOM).transpose(Image.FLIP_LEFT_RIGHT))
+        print("LEN:", len(self.tileset), len(self.resizedTileset))
+        tileInd = 0
+        testTileInd = 0
+
+        while tileInd < len(self.tileset):
+            # print(tileInd, testTileInd)
+            max_equal_perc = -1
+            saved_testTileInd = -1
+            saved_is_same_dom_color = False
+            saved_who_have_more_colors = False
+            saved_is_colors_same_on_2_images = False
+
+
+            while testTileInd < len(self.tileset):
+               # print(testTileInd)
+               equal_perc = self.getImageEqualPercent(self.resizedTileset[tileInd], self.resizedTileset[testTileInd])
+               test_perc = self.getImageEqualPercent(self.resizedTileset2[tileInd], self.resizedTileset2[testTileInd])
+               if test_perc > equal_perc:
+                  equal_perc = test_perc
+               test_perc = self.getImageEqualPercent(self.resizedTileset3[tileInd], self.resizedTileset3[testTileInd])
+               if test_perc > equal_perc:
+                  equal_perc = test_perc
+               test_perc = self.getImageEqualPercent(self.resizedTileset4[tileInd], self.resizedTileset4[testTileInd])
+               if test_perc > equal_perc:
+                  equal_perc = test_perc
+
+               is_same_dom_color, who_have_more_colors, is_colors_same_on_2_images = self.isImagesHaveColors(self.tileset[tileInd], self.tileset[testTileInd])
+               if((equal_perc >= threshold) and (equal_perc > max_equal_perc) and is_same_dom_color):
+
+                  max_equal_perc = equal_perc
+                  saved_testTileInd = testTileInd
+                  saved_is_same_dom_color = is_same_dom_color
+                  saved_who_have_more_colors = who_have_more_colors
+                  saved_is_colors_same_on_2_images = is_colors_same_on_2_images
+               testTileInd += 1
+               # if not is_colors_same_on_2_images:
+               #    continue
+               #  print("[]", testTileInd, len(self.tileset))
+            # print("m: ", max_equal_perc)
+            if((max_equal_perc >= 0.60) and (max_equal_perc < 1.0)): #0.75 # and is_same_dom_color
+               # print((self.tile_population[tileInd], self.tile_population[saved_testTileInd]))
+               if((self.tile_population[tileInd] < self.tile_population[saved_testTileInd])):
+                     # and who_have_more_colors and is_colors_same_on_2_images
+                     # print(testTileInd)
+                     # print("1:", testTileInd, len(self.tileset))
+                     # print("2:", testTileInd, len(self.resizedTileset))
+
+                  self.tileset[tileInd] = self.resizedTileset[saved_testTileInd].resize([self.cell_size, self.cell_size], Image.NEAREST)
+
+                  self.replaceTileIndOnTileMap(saved_testTileInd, tileInd)
+                     
+                  self.tileset = self.tileset[:saved_testTileInd] + self.tileset[saved_testTileInd+1:]
+                  self.resizedTileset = self.resizedTileset[:saved_testTileInd] + self.resizedTileset[saved_testTileInd+1:]
+                     
+                  print("1a:", saved_testTileInd, len(self.tileset))
+               # else:
+                  
+               #    self.tileset[saved_testTileInd] = self.resizedTileset[tileInd].resize([self.cell_size, self.cell_size], Image.NEAREST)
+               #    self.replaceTileIndOnTileMap(saved_testTileInd, tileInd)
+
+
+               #    self.tileset = self.tileset[:saved_testTileInd] + self.tileset[saved_testTileInd+1:]
+               #    self.resizedTileset = self.resizedTileset[:saved_testTileInd] + self.resizedTileset[saved_testTileInd+1:]
+               #    print("1b:", saved_testTileInd, tileInd, len(self.tileset))
+            
+            tileInd += 1
+            testTileInd = tileInd +1
+   #  self.tileset = self.tileset[:250]
+   #  print("LLL: ", len(self.tileset))
+   #  #test
+   #  cols = int(self.src_img.size[0]/self.cell_size)
+   #  rows = int(self.src_img.size[1]/self.cell_size)
+   #  for tileY in range(rows):
+   #    for tileX in range(cols):
+   #       if self.tilemap[tileY][tileX] > 250:
+   #          print(f"Found: {str(tileY)}")
+   #          print(self.tilemap[tileY])
+   #          break
+    
     print("Tileset optimization is done")
   def removeIndFromArr(self, arr, removeInd):
      arr = arr[:removeInd] + arr[removeInd+1:]
@@ -246,7 +357,7 @@ class uniqueTileReducer():
        for tileX in range(0, cols):
          if self.tilemap[tileY][tileX] == tileIndFrom:
            self.tilemap[tileY][tileX] = tileIndTo
-         if self.tilemap[tileY][tileX] >= tileIndFrom:
+         if self.tilemap[tileY][tileX] > tileIndFrom:
             self.tilemap[tileY][tileX] = self.tilemap[tileY][tileX]-1
    
   def removeTileIndOnTileMap(self, tileIndRemove):
@@ -418,31 +529,44 @@ class uniqueTileReducer():
     pic_size[0] = self.src_img.size[0]
     pic_size[1] = self.src_img.size[1]
 
+    y_step = 20
+
     cur_threshold = max_threshold
 
     compare_pic_size = [0, 0]
     compare_pic_size[0] = pic_size[0]*(int((max_threshold-min_threshold)/threshold_step)+1)
-    compare_pic_size[1] = pic_size[1]
+    compare_pic_size[1] = pic_size[1]+y_step
     compare_pic = Image.new("RGBA", compare_pic_size)
 
     draw_compare_pic = ImageDraw.Draw(compare_pic)
     posX = 0
     while cur_threshold > min_threshold:
+        textPosY = 0
         self.src_img = Image.open(self.src_img_path)
         self.createTilesetFromImage()
+        max_tiles = len(self.tileset)
         self.reduceTilesetSizeBySimilarity(threshold=cur_threshold)
         self.recreateImageFromTilemap(mode=1)
-        compare_pic.paste(self.src_img, [posX, 0])
+        self.createTilesetFromImage()
+        cur_tiles = len(self.tileset)
+
+        draw_compare_pic.text((posX, textPosY), "quality: "+str(cur_threshold)[:4])
+        textPosY += 12
+        draw_compare_pic.text((posX, textPosY), f"tileset len before/after: {str(cur_tiles)}/{str(max_tiles)}=" + str(cur_tiles/max_tiles)[:4] + "%")
+        textPosY += 12
+        draw_compare_pic.text((posX, textPosY), f"tileset len loss: " + str(1-(cur_tiles/max_tiles))[:4] + "%")
+        textPosY += 12
+
+        compare_pic.paste(self.src_img, [posX, textPosY])
+
         print(f"Image created with treshold: {str(cur_threshold)}")
-        
-        draw_compare_pic.text((posX, 0), str(cur_threshold)[:4])
-        posX += pic_size[0]
-
-
         cur_threshold -= threshold_step
+        posX += pic_size[0]
+        self.src_img.close()
     compare_pic.save(savePath)
 
   def createTilesetFromImage(self, savePath = "tileset.png", flipTilesRemove=True):
+    self.tileset = []
     cur_img_size = self.src_img.size
     cols = int(cur_img_size[0]/self.cell_size)
     rows = int(cur_img_size[1]/self.cell_size)
@@ -509,14 +633,17 @@ class uniqueTileReducer():
     tileset_img.save(savePath)
 
 def use_example():
-   reducer = uniqueTileReducer(src_img_path="map.png", sim_method=SimilarityAlghorithm.EQUAL_PIXELS_ON_REDUCED_RESOLUTION_V2_TEST)
+   reducer = uniqueTileReducer(src_img_path="map.png", sim_method=SimilarityAlghorithm.EQUAL_PIXELS_ON_REDUCED_RESOLUTION_V2)
    reducer.createTilesetFromImage()
-   reducer.reduceTilesetSizeBySimilarity(0.3) # val from 0.2 to 1.0, the less value, the less detailed image, the less unique tiles
+   print(len(reducer.tileset))
+   reducer.reduceTilesetSizeBySimilarity(0.4) # val from 0.2 to 1.0, the less value, the less detailed image, the less unique tiles
    reducer.recreateImageFromTilemap()
+   reducer.createTilesetFromImage()
+   print(len(reducer.tileset))
 
 def use_example_2():
    reducer = uniqueTileReducer(src_img_path="map.png", sim_method=SimilarityAlghorithm.EQUAL_PIXELS_ON_REDUCED_RESOLUTION_V2)
-   reducer.createComparePic(savePath="compareExample.png")
+   reducer.createComparePic(savePath="compareExample.png",min_threshold=0.2)
 
 
 use_example_2()
